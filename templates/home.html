@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Lab monitoring</title>
+	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    </head>
+    <body>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class=flashes style="color:red">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        <h1>Monitoring</h1>
+	<div id="monitoring">
+		<ul class="list">
+		{% for device in data.devices.find_all('device') %}
+			<li>{{ device['id'] }} {{ device['state'] }}</li>
+		{% endfor %}
+		</ul>
+		<p>Only plots for the day. Full data remains in the database.</p>
+		<img src="/api/temperature.png" alt="1wire" />
+		<img src="/api/voltage.png" alt="sipms" />
+		<p>Refresh page to update plots</p>
+	</div>
+	<h1>Detector</h1>
+		<img src="/api/detector.png" alt="detector" />
+		<p>Upload run XML:</p>
+		<form action="/api/upload_xml" method="post" enctype="multipart/form-data">
+			<input type="file" name="detector_xml">
+			<input type="submit" value="Upload">
+		</form>
+	<h1>Run</h1>
+	<div id="run">
+		<p>Current run settings for {{ data.run['type'] }}</p>
+		<ul>
+		{% for measurement in data.run.find_all('measurement') %}
+			<li>{{ measurement }}</li>
+		{% endfor %}
+		</ul>
+		<button>Start run (not ready yet)</button>
+	</div>
+	<footer>
+		<p>Running on Apache2 mod_wsgi.</p>
+	</footer>
+    </body>
+</html>
