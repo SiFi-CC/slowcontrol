@@ -31,7 +31,7 @@
 		<p>Upload run XML:</p>
 		<form action="/api/upload_xml" method="post" enctype="multipart/form-data">
 			<input type="file" name="detector_xml">
-			<input type="submit" value="Upload">
+			<input type="submit" value="Upload" />
 		</form>
 	<h1>Run</h1>
 	<div id="run">
@@ -41,7 +41,12 @@
 			<li>{{ measurement }}</li>
 		{% endfor %}
 		</ul>
-		<button>Start run (not ready yet)</button>
+		<form action="/api/start_run" method="post">
+			<input type="submit" value="Start" />
+		</form>
+		<form action="/api/stop_run" method="post">
+			<input type="submit" value="Stop" />
+		</form>
 	</div>
 	<footer>
 		<p>Running on Apache2 mod_wsgi.</p>

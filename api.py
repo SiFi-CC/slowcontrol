@@ -11,8 +11,11 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from PIL import Image, ImageFont, ImageDraw
 from bs4 import BeautifulSoup
+import subprocess
+import signal
 
 UPLOAD_FOLDER = '/scratch/gccb/mark/flask/files/'
+popen = 0
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ['xml']
@@ -78,7 +81,7 @@ def create_detector():
         x1, y1 = frame[2], frame[3]
         x2, y2 = frame[2] + frame[0], frame[3] + frame[1]
         for s in board3:
-            if str(frame[4]) == s["channel"]:
+            if str(frame[4]) == s["id"]:
                 fill = (0, 0, 0, 100)
         draw.rectangle([x1, y1, x2, y2], outline=(0, 0, 0, 255), fill=fill)
         draw.text((frame[2], frame[3]), " " + str(frame[4]), fill="black")
@@ -88,13 +91,20 @@ def create_detector():
         x1, y1 = frame[2], frame[3]
         x2, y2 = frame[2] + frame[0], frame[3] + frame[1]
         for s in board4:
-            if str(frame[4]) == s["channel"]:
+            if str(frame[4]) == s["id"]:
                 fill = (0, 0, 0, 100)
         draw.rectangle([x1, y1, x2, y2], outline=(0, 0, 0, 255), fill=fill)
         draw.text((frame[2], frame[3]), " " + str(frame[4]), fill="black")
         fill = (255, 255, 255, 255)
     draw.text((space, 100), "Coupling: " + data.detector['coupling'] + "mm, raster: " + data.detector['raster'], "black")
     return im
+class Lemur(object):
+    def __init__(self):
+        self.processes = {}
+    def start(self, label, process):
+        self.processes[label] = subprocess.Popen(process)
+    def stop(self, label):
+        self.processes[label].send_signal(signal.SIGINT)
 
 class Monkey(object):
     def __init__(self):
@@ -118,6 +128,7 @@ os.environ['MPLCONFIGDIR'] = '/tmp/'
 app = Flask(__name__, static_folder='static')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 #max 16mb
+lemur = Lemur()
 @app.route("/home")
 def home():
     contents = ""
@@ -176,14 +187,22 @@ def voltage(id):
     return Response(json.dumps(results, default=json_serial), mimetype='text/json')
 @app.route("/start_run", methods=['POST'])
 def start_run():
-    #TODO: read XML and start run
-    content = request.json
-    return content
+    contents = ""
+    with open(UPLOAD_FOLDER + 'current.xml', 'r') as f:
+        contents = f.read()
+    data = BeautifulSoup(contents, "lxml")
+    #start devices
+    if data.devices.find('device', attrs={"id":"C11204-02"})['state'] == "on":
+        lemur.start('C11204-02', ["/scratch/gccb/mark/SiPMLogger/SiPMLogger", data.devices.find('device', attrs={"id":"C11204-02"})['voltage'] ] )
+    if data.devices.find('device', attrs={"id":"MOTech"})['state'] == "on":
+        lemur.start('MOTech', ["/scratch/gccb/mark/MOTech/MOTech", data.devices.find('device', attrs={"id":"MOTech"})['voltage'] ] )
+    #start motor and data acquistion (desktop digitizer or twinpeaks)
+    return redirect("/api/home")
 @app.route("/stop_run", methods=['POST'])
 def stop_run():
-    #TODO: stop run
-    content = request.json
-    return content
+    lemur.stop('C11204-02')
+    lemur.stop('MOTech')
+    return redirect("/api/home")
 
 if __name__ == "__main__":
     app.run()
