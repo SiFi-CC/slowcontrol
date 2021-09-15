@@ -17,7 +17,7 @@
         <h1>Monitoring</h1>
 	<div id="monitoring">
 		<ul class="list">
-		{% for device in data.devices.find_all('device') %}
+		{% for device in data['xml'].devices.find_all('device') %}
 			<li>{{ device['id'] }} {{ device['state'] }}</li>
 		{% endfor %}
 		</ul>
@@ -35,18 +35,22 @@
 		</form>
 	<h1>Run</h1>
 	<div id="run">
-		<p>Current run settings for {{ data.run['type'] }}</p>
+		<p>Current run settings for {{ data['xml'].run['type'] }}</p>
 		<ul>
-		{% for measurement in data.run.find_all('measurement') %}
+		{% for measurement in data['xml'].run.find_all('measurement') %}
 			<li>{{ measurement }}</li>
 		{% endfor %}
 		</ul>
+		<p>Run {{data['sql']['id'] }} start: {{ data['sql']['start'] }} stop: {{ data['sql']['stop'] }} </p>
+		{% if data['sql']['stop'] %}
 		<form action="/api/start_run" method="post">
 			<input type="submit" value="Start" />
 		</form>
+		{% else %}
 		<form action="/api/stop_run" method="post">
 			<input type="submit" value="Stop" />
 		</form>
+		{% endif %}
 	</div>
 	<footer>
 		<p>Running on Apache2 mod_wsgi.</p>

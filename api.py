@@ -14,6 +14,8 @@ from bs4 import BeautifulSoup
 import subprocess
 import signal
 
+from extensions import MotorInterface
+
 UPLOAD_FOLDER = '/scratch/gccb/mark/flask/files/'
 popen = 0
 def allowed_file(filename):
@@ -110,6 +112,7 @@ class Monkey(object):
     def __init__(self):
         self.mysql_conn = ""
         self.results = []
+        self.current_run = 0
         self.mysql()
     def mysql(self):
         try:
@@ -118,9 +121,26 @@ class Monkey(object):
             print(e)
     def read_from_table(self, device_id):
         cursor = self.mysql_conn.cursor()
-        cursor.execute("SELECT value, created FROM outputs WHERE device_id=%s AND created >= CURDATE();", (device_id, ) );
+        cursor.execute("SELECT value, created FROM outputs WHERE device_id=%s AND created >= CURDATE();", (device_id, ) )
         self.results = cursor.fetchall()
         return self.results
+    def get_run(self):
+        cursor = self.mysql_conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, start, stop FROM runs ORDER BY id DESC LIMIT 1;")
+        self.results = cursor.fetchone()
+        return self.results
+    def start_run(self):
+        cursor = self.mysql_conn.cursor()
+        cursor.execute("INSERT INTO runs (detector_id) VALUES (1);")
+        self.mysql_conn.commit()
+        cursor.execute("SELECT LAST_INSERT_ID();")
+        self.current_run = cursor.fetchone()[0]
+        return self.results
+    def stop_run(self):
+        cursor = self.mysql_conn.cursor()
+        cursor.execute("UPDATE runs SET state='calibration' WHERE id=%s;", (self.current_run, ) )
+        self.mysql_conn.commit()
+        print("UPDATE runs SET state='calibration' WHERE id=%s;", (self.current_run, ) )
     def __del__(self):
         self.mysql_conn.close();
 
@@ -129,13 +149,15 @@ app = Flask(__name__, static_folder='static')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 #max 16mb
 lemur = Lemur()
+monkey = Monkey()
 @app.route("/home")
 def home():
     contents = ""
     with open(UPLOAD_FOLDER + 'current.xml', 'r') as f:
         contents = f.read()
     data = BeautifulSoup(contents, "lxml")
-    return render_template("home.html", data=data)
+    rundata = monkey.get_run()
+    return render_template("home.html", data={'xml':data, 'sql':rundata} )
 @app.route("/upload_xml", methods=['GET', 'POST'])
 def upload_xml():
     if request.method == 'POST':
@@ -185,23 +207,36 @@ def temperature(id):
 def voltage(id):
     results = Monkey().read_from_table(id) #C11204-02
     return Response(json.dumps(results, default=json_serial), mimetype='text/json')
+@app.route("/motor")
+def motor():
+    url_values = request.args
+    motor = MotorInterface.MotorInterface()
+    if url_values.get('cmd') == 'zero':
+        motor.zero()
+    if url_values.get('cmd') == 'move_x':
+        x = url_values.get('x')
+        motor.move_x(int(x) )
+    status = motor.status
+    return Response(json.dumps(status, default=json_serial), mimetype='text/json')
 @app.route("/start_run", methods=['POST'])
 def start_run():
     contents = ""
     with open(UPLOAD_FOLDER + 'current.xml', 'r') as f:
         contents = f.read()
     data = BeautifulSoup(contents, "lxml")
+    monkey.start_run()
     #start devices
-    if data.devices.find('device', attrs={"id":"C11204-02"})['state'] == "on":
-        lemur.start('C11204-02', ["/scratch/gccb/mark/SiPMLogger/SiPMLogger", data.devices.find('device', attrs={"id":"C11204-02"})['voltage'] ] )
-    if data.devices.find('device', attrs={"id":"MOTech"})['state'] == "on":
-        lemur.start('MOTech', ["/scratch/gccb/mark/MOTech/MOTech", data.devices.find('device', attrs={"id":"MOTech"})['voltage'] ] )
+    ##if data.devices.find('device', attrs={"id":"C11204-02"})['state'] == "enable":
+    ##    lemur.start('C11204-02', ["/scratch/gccb/mark/SiPMLogger/SiPMLogger", data.devices.find('device', attrs={"id":"C11204-02"})['voltage'] ] )
+    ##if data.devices.find('device', attrs={"id":"MOTech"})['state'] == "enable":
+    ##    lemur.start('MOTech', ["/scratch/gccb/mark/MOTech/MOTech", data.devices.find('device', attrs={"id":"MOTech"})['voltage'] ] )
     #start motor and data acquistion (desktop digitizer or twinpeaks)
     return redirect("/api/home")
 @app.route("/stop_run", methods=['POST'])
 def stop_run():
-    lemur.stop('C11204-02')
-    lemur.stop('MOTech')
+    monkey.stop_run()
+    ##lemur.stop('C11204-02')
+    ##lemur.stop('MOTech')
     return redirect("/api/home")
 
 if __name__ == "__main__":
