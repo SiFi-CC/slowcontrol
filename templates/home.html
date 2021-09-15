@@ -16,11 +16,6 @@
         {% endwith %}
         <h1>Monitoring</h1>
 	<div id="monitoring">
-		<ul class="list">
-		{% for device in data['xml'].devices.find_all('device') %}
-			<li>{{ device['id'] }} {{ device['state'] }}</li>
-		{% endfor %}
-		</ul>
 		<p>Only plots for the day. Full data remains in the database.</p>
 		<img src="/api/temperature.png" alt="1wire" />
 		<img src="/api/voltage.png" alt="sipms" />
@@ -33,24 +28,28 @@
 			<input type="file" name="detector_xml">
 			<input type="submit" value="Upload" />
 		</form>
+	<h1>Devices</h1>
+		<ul class="list">
+		{% for device in data['xml'].devices.find_all('device') %}
+			<li>{{ device['id'] }} {{ device['state'] }}</li>
+		{% endfor %}
+		</ul>
+		<form action="/api/start_devices" method="post">
+			<input type="submit" value="Start" />
+		</form>
+		<form action="/api/stop_devices" method="post">
+			<input type="submit" value="Stop" />
+		</form>
 	<h1>Run</h1>
 	<div id="run">
 		<p>Current run settings for {{ data['xml'].run['type'] }}</p>
-		<ul>
-		{% for measurement in data['xml'].run.find_all('measurement') %}
-			<li>{{ measurement }}</li>
-		{% endfor %}
-		</ul>
 		<p>Run {{data['sql']['id'] }} start: {{ data['sql']['start'] }} stop: {{ data['sql']['stop'] }} </p>
-		{% if data['sql']['stop'] %}
 		<form action="/api/start_run" method="post">
 			<input type="submit" value="Start" />
 		</form>
-		{% else %}
 		<form action="/api/stop_run" method="post">
 			<input type="submit" value="Stop" />
 		</form>
-		{% endif %}
 	</div>
 	<footer>
 		<p>Running on Apache2 mod_wsgi.</p>

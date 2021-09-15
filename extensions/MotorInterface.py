@@ -41,7 +41,7 @@ class MotorInterface(object):
                         if readout.startswith("Ready".encode() ):
                             break
                 steps= steps%-32700
-            #self.status = "Go %d steps" % steps
+            self.status = {'status':"moving"}
             self.ser.write(("%s" % steps).encode() )
             while True:
                 readout = self.ser.readline()
@@ -70,7 +70,7 @@ class MotorInterface(object):
         while True:
             try:
                 readout = self.ser.readline()
-                #self.status = {'status':"waiting for switch"}
+                self.status = {'status':"moving"}
                 if readout.startswith("Ready".encode() ):
                     self.status = {'xpos':0, 'status':"reached"}
                     break

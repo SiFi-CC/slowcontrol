@@ -13,6 +13,8 @@ from PIL import Image, ImageFont, ImageDraw
 from bs4 import BeautifulSoup
 import subprocess
 import signal
+import threading
+import time
 
 from extensions import MotorInterface
 
@@ -100,13 +102,31 @@ def create_detector():
         fill = (255, 255, 255, 255)
     draw.text((space, 100), "Coupling: " + data.detector['coupling'] + "mm, raster: " + data.detector['raster'], "black")
     return im
+def interval(measurements):
+    lemur.zero()
+    for measurement in measurements:
+        lemur.move_x(measurement['position'])
+        time.sleep(int(measurement['pause']) )
 class Lemur(object):
     def __init__(self):
         self.processes = {}
+        self.motor = MotorInterface.MotorInterface()
+        self.status = self.motor.status
     def start(self, label, process):
         self.processes[label] = subprocess.Popen(process)
     def stop(self, label):
         self.processes[label].send_signal(signal.SIGINT)
+    def zero(self):
+        self.motor.zero()
+        self.status = self.motor.status
+    def move_x(self, x):
+        try:
+            val = int(x)
+        except ValueError:
+            print("calibration motor x-value not a valid number")
+            return
+        self.motor.move_x(int(x) )
+        self.status = self.motor.status
 
 class Monkey(object):
     def __init__(self):
@@ -209,34 +229,44 @@ def voltage(id):
     return Response(json.dumps(results, default=json_serial), mimetype='text/json')
 @app.route("/motor")
 def motor():
-    url_values = request.args
-    motor = MotorInterface.MotorInterface()
-    if url_values.get('cmd') == 'zero':
-        motor.zero()
-    if url_values.get('cmd') == 'move_x':
-        x = url_values.get('x')
-        motor.move_x(int(x) )
-    status = motor.status
-    return Response(json.dumps(status, default=json_serial), mimetype='text/json')
+    return Response(json.dumps(lemur.status, default=json_serial), mimetype='text/json')
+@app.route("/start_devices", methods=['POST'])
+def start_devices():
+    contents = ""
+    with open(UPLOAD_FOLDER + 'current.xml', 'r') as f:
+        contents = f.read()
+    data = BeautifulSoup(contents, "lxml")
+    #start devices
+    if data.devices.find('device', attrs={"id":"C11204-02"})['state'] == "enable":
+        lemur.start('C11204-02', ["/scratch/gccb/mark/SiPMLogger/SiPMLogger", data.devices.find('device', attrs={"id":"C11204-02"})['voltage'] ] )
+        print("start C11204-02")
+    if data.devices.find('device', attrs={"id":"MOTech"})['state'] == "enable":
+        lemur.start('MOTech', ["/scratch/gccb/mark/MOTech/MOTech", data.devices.find('device', attrs={"id":"MOTech"})['voltage'] ] )
+        print("start MOTech")
+    return redirect("/api/home")
+@app.route("/stop_devices", methods=['POST'])
+def stop_devices():
+    lemur.stop('C11204-02')
+    lemur.stop('MOTech')
+    return redirect("/api/home")
 @app.route("/start_run", methods=['POST'])
 def start_run():
     contents = ""
     with open(UPLOAD_FOLDER + 'current.xml', 'r') as f:
         contents = f.read()
     data = BeautifulSoup(contents, "lxml")
-    monkey.start_run()
-    #start devices
-    ##if data.devices.find('device', attrs={"id":"C11204-02"})['state'] == "enable":
-    ##    lemur.start('C11204-02', ["/scratch/gccb/mark/SiPMLogger/SiPMLogger", data.devices.find('device', attrs={"id":"C11204-02"})['voltage'] ] )
-    ##if data.devices.find('device', attrs={"id":"MOTech"})['state'] == "enable":
-    ##    lemur.start('MOTech', ["/scratch/gccb/mark/MOTech/MOTech", data.devices.find('device', attrs={"id":"MOTech"})['voltage'] ] )
-    #start motor and data acquistion (desktop digitizer or twinpeaks)
+    #monkey.start_run()
+    #start motor
+    if data.run['type'] == "calibration":
+        measurements = run.find_all('measurement')
+        thread = threading.Thread(target=interval, args=(measurements,) )
+        thread.setDaemon(True)
+        thread.start()
+        #data acquistion (desktop digitizer or twinpeaks) in the daemon interval method
     return redirect("/api/home")
 @app.route("/stop_run", methods=['POST'])
 def stop_run():
-    monkey.stop_run()
-    ##lemur.stop('C11204-02')
-    ##lemur.stop('MOTech')
+    #monkey.stop_run()
     return redirect("/api/home")
 
 if __name__ == "__main__":
