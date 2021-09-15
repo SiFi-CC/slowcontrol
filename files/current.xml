@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<run type="calibration" daq="dd"><!-- types: calibration, test, physics daq=petiroc, dd, twin peaks -->
+    <measurement position=10 duration=10.0 pause=5 />
+    <measurement position=10 duration=10.0 pause=5 />
+    <measurement position=10 duration=10.0 pause=5 />
+    <measurement position=10 duration=10.0 pause=5 />
+    <measurement position=10 duration=10.0 pause=5 />
+    <measurement position=10 duration=10.0 pause=5 />
+</run>
+<devices>
+    <device type="temperature" id="28.A953460B0000" state=on />
+    <device type="temperature" id="28.2D28440B0000" state=on />
+    <device type="temperature" id="28.8B08470B0000" state=on />
+    <device type="powersupply" id="C11204-02" state="enable" voltage=53.2 />
+    <device type="powersupply" id="MOTech" state="enable" voltage=30.0 />
+</devices>
+<reference voltage=53.2>
+    <sipm id=0 channel=-1 />
+    <sipm id=1 channel=-1 />
+</reference>
+<detector name="prototype0" coupling=0.5 raster=1>
+    <board number="3" max=32 id="461900102-01" sipm="pm1125-wb-b0">
+        <sipm id=2 channel=0 />
+    </board>
+    <board number="4" max=32 id="461900110-01" sipm="pm1125-wb-b0">
+        <sipm id=50 channel=1 />
+    </board>
+</detector>
