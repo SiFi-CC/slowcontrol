@@ -16,6 +16,7 @@ class Monkey(object):
         self.mysql()
     def mysql(self):
         try:
+            load_dotenv(os.path.join(os.path.dirname(__file__), '.env') )
             self.mysql_conn = connect(host=os.getenv("HOST"), database=os.getenv("DATABASE"), user=os.getenv("USER"), password=os.environ["PASSWORD"])
         except Error as e:
             print(e)
@@ -36,5 +37,4 @@ class Monkey(object):
                 self.write_to_table({'name':d, 'value':temperature})
     def __del__(self):
         self.mysql_conn.close();
-load_dotenv(os.path.join('.', '.env') )
 Monkey().look()

@@ -18,8 +18,7 @@ import time
 
 from extensions import MotorInterface
 
-UPLOAD_FOLDER = '/scratch/gccb/mark/flask/files/'
-popen = 0
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'files/')
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ['xml']
@@ -106,6 +105,7 @@ def interval(measurements):
     lemur.zero()
     for measurement in measurements:
         lemur.move_x(measurement['position'])
+        lemur.wavedump() #blocking, but in the child process
         time.sleep(int(measurement['pause']) )
 class Lemur(object):
     def __init__(self):
@@ -127,6 +127,8 @@ class Lemur(object):
             return
         self.motor.move_x(int(x) )
         self.status = self.motor.status
+    def wavedump(self):
+        subprocess.Popen([os.path.join(os.path.dirname(__file__), "devices/CAENDigitizer/wavedump-3.10.2_mod/src/wavedump") ] )
 
 class Monkey(object):
     def __init__(self):
@@ -205,6 +207,12 @@ def temperature_png():
     output = io.BytesIO()
     FigureCanvas(fig).print_png(output)
     return Response(output.getvalue(), mimetype='image/png')
+@app.route('/rate.png')
+def rate_png():
+    fig = create_figure(["http://localhost/api/rate"], "Rate", ["CAENDigitizer"], "time", "f[Hz]")
+    output = io.BytesIO()
+    FigureCanvas(fig).print_png(output)
+    return Response(output.getvalue(), mimetype='image/png')
 @app.route('/voltage.png')
 def voltage_png():
     fig = create_figure(["http://localhost/api/voltage/4", "http://localhost/api/voltage/5"], "SiPM", ["C11204-02", "MOTech"], "time", "V[V]")
@@ -219,6 +227,10 @@ def detector_png():
     output.seek(0)
     return Response(output, mimetype='image/png')
 
+@app.route("/rate")
+def rate():
+    results = Monkey().read_from_table(6) #CAENDigitizer
+    return Response(json.dumps(results, default=json_serial), mimetype='text/json')
 @app.route("/temperature/<int:id>")
 def temperature(id):
     results = Monkey().read_from_table(id) #28.A953460B0000
@@ -238,10 +250,10 @@ def start_devices():
     data = BeautifulSoup(contents, "lxml")
     #start devices
     if data.devices.find('device', attrs={"id":"C11204-02"})['state'] == "enable":
-        lemur.start('C11204-02', ["/scratch/gccb/mark/SiPMLogger/SiPMLogger", data.devices.find('device', attrs={"id":"C11204-02"})['voltage'] ] )
+        lemur.start('C11204-02', [os.path.join(os.path.dirname(__file__), "devices/C11204-02/C11204-02"), data.devices.find('device', attrs={"id":"C11204-02"})['voltage'] ] )
         print("start C11204-02")
     if data.devices.find('device', attrs={"id":"MOTech"})['state'] == "enable":
-        lemur.start('MOTech', ["/scratch/gccb/mark/MOTech/MOTech", data.devices.find('device', attrs={"id":"MOTech"})['voltage'] ] )
+        lemur.start('MOTech', [os.path.join(os.path.dirname(__file__), "devices/MOTech/MOTech"), data.devices.find('device', attrs={"id":"MOTech"})['voltage'] ] )
         print("start MOTech")
     return redirect("/api/home")
 @app.route("/stop_devices", methods=['POST'])
