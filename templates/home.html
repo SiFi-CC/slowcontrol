@@ -32,7 +32,7 @@
 	<h1>Devices</h1>
 		<ul class="list">
 		{% for device in data['xml'].devices.find_all('device') %}
-			<li>{{ device['id'] }} {{ device['state'] }}</li>
+			<li>{{ device['name'] }} {{ device['state'] }}</li>
 		{% endfor %}
 		</ul>
 		<form action="/api/start_devices" method="post">

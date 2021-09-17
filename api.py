@@ -28,7 +28,7 @@ def json_serial(obj):
         return obj.isoformat()
     raise TypeError ("Type %s not serializable" % type(obj))
 def create_figure(urls=[], title="", labels=[], xlabel="x", ylabel="y"):
-    figure = Figure()
+    figure = Figure(figsize=(15, 2) )
     ax = figure.add_subplot(1, 1, 1)
     k = 0
     for url in urls:
@@ -102,7 +102,7 @@ def create_detector():
     draw.text((space, 100), "Coupling: " + data.detector['coupling'] + "mm, raster: " + data.detector['raster'], "black")
     return im
 def interval(measurements):
-    lemur.zero()
+    #lemur.zero()
     for measurement in measurements:
         lemur.move_x(measurement['position'])
         lemur.wavedump() #blocking, but in the child process
@@ -117,16 +117,22 @@ class Lemur(object):
     def stop(self, label):
         self.processes[label].send_signal(signal.SIGINT)
     def zero(self):
-        self.motor.zero()
-        self.status = self.motor.status
+        if self.status['status'] == 'SerialException':
+            pass
+        else:
+            self.motor.zero()
+            self.status = self.motor.status
     def move_x(self, x):
         try:
             val = int(x)
         except ValueError:
             print("calibration motor x-value not a valid number")
             return
-        self.motor.move_x(int(x) )
-        self.status = self.motor.status
+        if self.status['status'] == 'SerialException':
+            pass
+        else:
+            self.motor.move_x(int(x) )
+            self.status = self.motor.status
     def wavedump(self):
         subprocess.Popen([os.path.join(os.path.dirname(__file__), "devices/CAENDigitizer/wavedump-3.10.2_mod/src/wavedump") ] )
 
@@ -143,6 +149,7 @@ class Monkey(object):
             print(e)
     def read_from_table(self, device_id):
         cursor = self.mysql_conn.cursor()
+        #cursor.execute("SELECT value, created FROM outputs WHERE device_id=%s AND created >= CURDATE() - INTERVAL 1 DAY;", (device_id, ) )
         cursor.execute("SELECT value, created FROM outputs WHERE device_id=%s AND created >= CURDATE();", (device_id, ) )
         self.results = cursor.fetchall()
         return self.results
@@ -249,11 +256,11 @@ def start_devices():
         contents = f.read()
     data = BeautifulSoup(contents, "lxml")
     #start devices
-    if data.devices.find('device', attrs={"id":"C11204-02"})['state'] == "enable":
-        lemur.start('C11204-02', [os.path.join(os.path.dirname(__file__), "devices/C11204-02/C11204-02"), data.devices.find('device', attrs={"id":"C11204-02"})['voltage'] ] )
+    if data.devices.find('device', attrs={"name":"C11204-02"})['state'] == "enable":
+        lemur.start('C11204-02', [os.path.join(os.path.dirname(__file__), "devices/C11204-02/C11204-02"), data.devices.find('device', attrs={"name":"C11204-02"})['voltage'] ] )
         print("start C11204-02")
-    if data.devices.find('device', attrs={"id":"MOTech"})['state'] == "enable":
-        lemur.start('MOTech', [os.path.join(os.path.dirname(__file__), "devices/MOTech/MOTech"), data.devices.find('device', attrs={"id":"MOTech"})['voltage'] ] )
+    if data.devices.find('device', attrs={"name":"MOTech"})['state'] == "enable":
+        lemur.start('MOTech', [os.path.join(os.path.dirname(__file__), "devices/MOTech/MOTech"), data.devices.find('device', attrs={"name":"MOTech"})['voltage'] ] )
         print("start MOTech")
     return redirect("/api/home")
 @app.route("/stop_devices", methods=['POST'])

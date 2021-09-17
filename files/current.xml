@@ -8,11 +8,13 @@
     <measurement position=10 duration=10.0 pause=5 />
 </run>
 <devices>
-    <device type="temperature" id="28.A953460B0000" state=on />
-    <device type="temperature" id="28.2D28440B0000" state=on />
-    <device type="temperature" id="28.8B08470B0000" state=on />
-    <device type="powersupply" id="C11204-02" state="enable" voltage=53.2 />
-    <device type="powersupply" id="MOTech" state="enable" voltage=30.0 />
+    <device unit="C" name="28.A953460B0000" state=on />
+    <device unit="C" name="28.2D28440B0000" state=on />
+    <device unit="C" name="28.8B08470B0000" state=on />
+    <device unit="V" name="C11204-02" state="enable" voltage=53.2 />
+    <device unit="V" name="MOTech" state="enable" voltage=30.0 />
+    <device unit="Hz" name="CAENDigitizer" state="enable" />
+    <device unit="MB" name="CAENDigitizer" state="enable" />
 </devices>
 <reference voltage=53.2>
     <sipm id=0 channel=-1 />

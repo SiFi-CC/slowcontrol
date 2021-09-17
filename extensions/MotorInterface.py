@@ -11,9 +11,11 @@ class MotorInterface(object):
                 self.device = '/dev/' + d
         self.stepPosition = 0
         self.setStepPosition = 0
-        self.setPosition = 0
-        self.ser = serial.Serial(self.device, 9600, timeout=1)
         self.status = {}
+        try:
+            self.ser = serial.Serial(self.device, 9600, timeout=1)
+        except serial.SerialException:
+            self.status = {'status': 'SerialException'}
         #calibration constants
         self.m=0.01997
         self.b=0
@@ -74,7 +76,7 @@ class MotorInterface(object):
                 if readout.startswith("Ready".encode() ):
                     self.status = {'xpos':0, 'status':"reached"}
                     break
-            except SerialException:
+            except serial.SerialException:
                 self.status = {'status': 'SerialException'}
                 break
         self.stepPosition=0
