@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <run type="calibration" daq="dd"><!-- types: calibration, test, physics daq=petiroc, dd, twin peaks -->
-    <measurement position=10 duration=10.0 pause=5 />
-    <measurement position=10 duration=10.0 pause=5 />
-    <measurement position=10 duration=10.0 pause=5 />
-    <measurement position=10 duration=10.0 pause=5 />
-    <measurement position=10 duration=10.0 pause=5 />
-    <measurement position=10 duration=10.0 pause=5 />
+    <measurement position="10" duration="10" pause="5" />
+    <measurement position="10" duration="10" pause="5" />
 </run>
 <devices>
     <device unit="C" name="28.A953460B0000" state=on />

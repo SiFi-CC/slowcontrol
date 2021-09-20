@@ -31,9 +31,6 @@
 		</form>
 	<h1>Devices</h1>
 		<ul class="list">
-		{% for device in data['xml'].devices.find_all('device') %}
-			<li>{{ device['name'] }} {{ device['state'] }}</li>
-		{% endfor %}
 		</ul>
 		<form action="/api/start_devices" method="post">
 			<input type="submit" value="Start" />
@@ -43,8 +40,6 @@
 		</form>
 	<h1>Run</h1>
 	<div id="run">
-		<p>Current run settings for {{ data['xml'].run['type'] }}</p>
-		<p>Run {{data['sql']['id'] }} start: {{ data['sql']['start'] }} stop: {{ data['sql']['stop'] }} </p>
 		<form action="/api/start_run" method="post">
 			<input type="submit" value="Start" />
 		</form>

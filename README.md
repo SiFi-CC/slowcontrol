@@ -24,6 +24,8 @@ The detector and devices are defined by an XML file. Devices can only be turned 
 
 Runs are also defined in the XML file, be it calibration or any other type. Currently only the calibration runs are properly defined. This requires the `<measurement position=x duration=y pause=z />` tag to be present. Each measurement tag contains information on the position of the calibration arm and the data acquisition time.
 
+Also add lines to set environmental variables for `www-data` with SetEnv
+
 # Sample detector XML
 
 A working XML is available under `files/current.xml`.

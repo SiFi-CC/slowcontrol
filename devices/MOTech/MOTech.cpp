@@ -88,11 +88,16 @@ void write_to_db(MYSQL *conn, int fd, unsigned char *voltBuf, unsigned char *cur
 		current = std::atof(reinterpret_cast<const char *>(currBuf) );
 	}
 	// Execute a sql statement
-	std::string query = "INSERT INTO outputs (device_id, value) VALUES ((SELECT id FROM devices WHERE name='MOTech'), " + std::to_string(voltage) + ");";
+	std::string query = "INSERT INTO outputs (device_id, value) VALUES ((SELECT id FROM devices WHERE name='MOTech' AND unit='V'), " + std::to_string(voltage) + ");";
 	if (mysql_query(conn, query.c_str() ) ) {
 		std::cerr << mysql_error(conn) << std::endl;
 	}
-	//printf("v=%f i=%f\n", voltage, current);
+	// Execute a sql statement
+	query = "INSERT INTO outputs (device_id, value) VALUES ((SELECT id FROM devices WHERE name='MOTech' AND unit='A'), " + std::to_string(current) + ");";
+	if (mysql_query(conn, query.c_str() ) ) {
+		std::cerr << mysql_error(conn) << std::endl;
+	}
+	printf("v=%f i=%f\n", voltage, current);
 }
 /*
  * catch Ctrl+C and then exit while loop
@@ -108,9 +113,9 @@ int main(int argc, char* argv[]) {
         MYSQL_ROW row;
 
         const char *server = "localhost";
-        const char *user = "lab";
-        const char *password = "protontherapy";
-        const char *database = "gccb";
+        const char *user = getenv("USER");
+        const char *password = getenv("PASSWORD");
+        const char *database = getenv("DATABASE");
 
         conn = mysql_init(NULL);
 
@@ -166,7 +171,6 @@ int main(int argc, char* argv[]) {
 
 	int s;
 	float voltage = .0f, current = .0f;
-	//Ctrl+C to exit loop and start voltage rampdown
 	//printf("Start ramping up to  %2.2f\n", set_voltage);
 	for(unsigned short i=0; i<=floor(set_voltage); i = i + rampInterval) {
 		send_command(fd, std::string("VSET1 ") + std::to_string(i), state);
@@ -176,6 +180,7 @@ int main(int argc, char* argv[]) {
 	send_command(fd, std::string("VSET1 ") + to_string_with_precision(set_voltage, 3), state);
 	write_to_db(conn, fd, voltBuf, currBuf);
 	tcflush(fd,TCIOFLUSH);
+	//Ctrl+C to exit loop and start voltage rampdown
 	while(!stop) {
 		write_to_db(conn, fd, voltBuf, currBuf);
 		tcflush(fd,TCIOFLUSH);
@@ -183,11 +188,6 @@ int main(int argc, char* argv[]) {
 		sleep(300);
 	}
 	if(stop) {
-                s = send_command(fd, std::string("VOUT1?"), voltBuf);
-                if(s > 0) {
-                        voltage = std::atof(reinterpret_cast<const char *>(voltBuf) );
-                }
-		//printf("Start ramping down from %2.2f\n", voltage);
 		for(unsigned short i=floor(voltage); i > 0; i = i - rampInterval) {
 			send_command(fd, std::string("VSET1 ") + std::to_string(i), state);
 			write_to_db(conn, fd, voltBuf, currBuf);

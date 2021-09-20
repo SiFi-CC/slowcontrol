@@ -17,6 +17,7 @@ import threading
 import time
 
 from extensions import MotorInterface
+from serial import SerialException
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'files/')
 def allowed_file(filename):
@@ -104,8 +105,11 @@ def create_detector():
 def interval(measurements):
     #lemur.zero()
     for measurement in measurements:
-        lemur.move_x(measurement['position'])
-        lemur.wavedump() #blocking, but in the child process
+        #lemur.move_x(measurement['position'])
+        print("Motor position moved by %s mm" % measurement['position'])
+        time.sleep(int(measurement['pause']) )
+        lemur.wavedump() #does not block, also updated the DB with run start/stop times
+        time.sleep(int(measurement['duration']) )
         time.sleep(int(measurement['pause']) )
 class Lemur(object):
     def __init__(self):
@@ -117,22 +121,16 @@ class Lemur(object):
     def stop(self, label):
         self.processes[label].send_signal(signal.SIGINT)
     def zero(self):
-        if self.status['status'] == 'SerialException':
-            pass
-        else:
-            self.motor.zero()
-            self.status = self.motor.status
+        self.motor.zero()
+        self.status = self.motor.status
     def move_x(self, x):
         try:
             val = int(x)
         except ValueError:
             print("calibration motor x-value not a valid number")
             return
-        if self.status['status'] == 'SerialException':
-            pass
-        else:
-            self.motor.move_x(int(x) )
-            self.status = self.motor.status
+        self.motor.move_x(int(x) )
+        self.status = self.motor.status
     def wavedump(self):
         subprocess.Popen([os.path.join(os.path.dirname(__file__), "devices/CAENDigitizer/wavedump-3.10.2_mod/src/wavedump") ] )
 
@@ -140,11 +138,10 @@ class Monkey(object):
     def __init__(self):
         self.mysql_conn = ""
         self.results = []
-        self.current_run = 0
         self.mysql()
     def mysql(self):
         try:
-            self.mysql_conn = connect(host="localhost", database=os.getenv("DATABASE"), user=os.getenv("USER"), password=os.getenv("PASSWORD"), auth_plugin='mysql_native_password')
+            self.mysql_conn = connect(host="localhost", database=os.getenv("DATABASE"), user=os.getenv("USER"), password=os.getenv("PASSWORD"), auth_plugin='mysql_native_password', autocommit='True')
         except Error as e:
             print(e)
     def read_from_table(self, device_id):
@@ -158,18 +155,6 @@ class Monkey(object):
         cursor.execute("SELECT id, start, stop FROM runs ORDER BY id DESC LIMIT 1;")
         self.results = cursor.fetchone()
         return self.results
-    def start_run(self):
-        cursor = self.mysql_conn.cursor()
-        cursor.execute("INSERT INTO runs (detector_id) VALUES (1);")
-        self.mysql_conn.commit()
-        cursor.execute("SELECT LAST_INSERT_ID();")
-        self.current_run = cursor.fetchone()[0]
-        return self.results
-    def stop_run(self):
-        cursor = self.mysql_conn.cursor()
-        cursor.execute("UPDATE runs SET state='calibration' WHERE id=%s;", (self.current_run, ) )
-        self.mysql_conn.commit()
-        print("UPDATE runs SET state='calibration' WHERE id=%s;", (self.current_run, ) )
     def __del__(self):
         self.mysql_conn.close();
 
@@ -258,10 +243,8 @@ def start_devices():
     #start devices
     if data.devices.find('device', attrs={"name":"C11204-02"})['state'] == "enable":
         lemur.start('C11204-02', [os.path.join(os.path.dirname(__file__), "devices/C11204-02/C11204-02"), data.devices.find('device', attrs={"name":"C11204-02"})['voltage'] ] )
-        print("start C11204-02")
     if data.devices.find('device', attrs={"name":"MOTech"})['state'] == "enable":
         lemur.start('MOTech', [os.path.join(os.path.dirname(__file__), "devices/MOTech/MOTech"), data.devices.find('device', attrs={"name":"MOTech"})['voltage'] ] )
-        print("start MOTech")
     return redirect("/api/home")
 @app.route("/stop_devices", methods=['POST'])
 def stop_devices():
@@ -274,10 +257,9 @@ def start_run():
     with open(UPLOAD_FOLDER + 'current.xml', 'r') as f:
         contents = f.read()
     data = BeautifulSoup(contents, "lxml")
-    #monkey.start_run()
     #start motor
     if data.run['type'] == "calibration":
-        measurements = run.find_all('measurement')
+        measurements = data.run.find_all('measurement')
         thread = threading.Thread(target=interval, args=(measurements,) )
         thread.setDaemon(True)
         thread.start()
@@ -285,7 +267,6 @@ def start_run():
     return redirect("/api/home")
 @app.route("/stop_run", methods=['POST'])
 def stop_run():
-    #monkey.stop_run()
     return redirect("/api/home")
 
 if __name__ == "__main__":

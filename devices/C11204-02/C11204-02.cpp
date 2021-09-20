@@ -53,9 +53,9 @@ int main(int argc, char* argv[]) {
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 	const char *server = "localhost";
-	const char *user = "lab";
-	const char *password = "protontherapy";
-	const char *database = "gccb";
+        const char *user = getenv("USER");
+        const char *password = getenv("PASSWORD");
+        const char *database = getenv("DATABASE");
 	conn = mysql_init(NULL);
 	/* Connect to database */
 	if (!mysql_real_connect(conn, server,
@@ -98,7 +98,12 @@ int main(int argc, char* argv[]) {
 		current = SendCommand("HGC", "", port);
 		temperature = SendCommand("HGT", "", port);
 		// Execute a sql statement
-		std::string query = "INSERT INTO outputs (device_id, value) VALUES ((SELECT id FROM devices WHERE name='C11204-02'), " + std::to_string(voltage) + ");";
+		std::string query = "INSERT INTO outputs (device_id, value) VALUES ((SELECT id FROM devices WHERE name='C11204-02' AND unit='V'), " + std::to_string(voltage) + ");";
+		if (mysql_query(conn, query.c_str() ) ) {
+			std::cerr << mysql_error(conn) << std::endl;
+			return false;
+		}
+		query = "INSERT INTO outputs (device_id, value) VALUES ((SELECT id FROM devices WHERE name='C11204-02' AND unit='A'), " + std::to_string(current) + ");";
 		if (mysql_query(conn, query.c_str() ) ) {
 			std::cerr << mysql_error(conn) << std::endl;
 			return false;
@@ -110,7 +115,13 @@ int main(int argc, char* argv[]) {
 	if(stop) {
 		voltage = 0.f;
 		// Execute a sql statement
-		std::string query = "INSERT INTO outputs (device_id, value) VALUES ((SELECT id FROM devices WHERE name='C11204-02'), " + std::to_string(voltage) + ");";
+		std::string query = "INSERT INTO outputs (device_id, value) VALUES ((SELECT id FROM devices WHERE name='C11204-02' AND unit='V'), " + std::to_string(voltage) + ");";
+		if (mysql_query(conn, query.c_str() ) ) {
+			std::cerr << mysql_error(conn) << std::endl;
+			return false;
+		}
+		current = 0.f;
+		query = "INSERT INTO outputs (device_id, value) VALUES ((SELECT id FROM devices WHERE name='C11204-02' AND unit='A'), " + std::to_string(current) + ");";
 		if (mysql_query(conn, query.c_str() ) ) {
 			std::cerr << mysql_error(conn) << std::endl;
 			return false;
