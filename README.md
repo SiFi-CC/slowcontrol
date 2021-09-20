@@ -16,6 +16,7 @@ The Flask application runs on `Apache2` on wsgi. Several REST API endpoints are
 - /home
 - /temperature/<int:id>
 - /voltage/<int:id>
+- /rate
 - /motor
  
 Plots for temperature and voltage are generated from `matplotlib` and updated on refresh.
@@ -34,6 +35,14 @@ A working XML is available under `files/current.xml`.
 
 This measurement is done with 1wire interface. Currently systemd is used to manage this `monkey.service`. `listen.py` measurement frequency depends on the `systemd` scripts `monkey.service` and the corresponding timer `monkey.timer`. Running `listen.py` with `python3` would only produce a single readout, so for persistence, use `systemctl start monkey` instead.
 
+# Run management
+
+## Calibration
+
+This is the only configuration available as defined in the XML file. For every measurement, the calibration arm would move by some small distance and the wavedump program would run to acquire data. It is important to define the measurements properly as it is the only way to stop the run. There is no stop button.
+
 # TODO:
+
+Provide similar functionality for the Twinpeaks board
 
 Find and kill zombie processes
