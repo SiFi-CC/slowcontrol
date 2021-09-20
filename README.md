@@ -39,7 +39,7 @@ This measurement is done with 1wire interface. Currently systemd is used to mana
 
 ## Calibration
 
-This is the only configuration available as defined in the XML file. For every measurement, the calibration arm would move by some small distance and the wavedump program would run to acquire data. It is important to define the measurements properly as it is the only way to stop the run. There is no stop button.
+This is the only configuration available as defined in the XML file. For every measurement, the calibration arm would move by some small distance and the wavedump program would run to acquire data. It is important to define the measurements properly as it is the only way to stop the run. There is no stop button. The run data files are stored as defined in `OUTPUT_PATH` of the `/etc/wavedump/WaveDumpConfig_X742.txt` file. One could define the `READOUT_CHANNEL` so that only interesting one would be stored.
 
 # TODO:
 
