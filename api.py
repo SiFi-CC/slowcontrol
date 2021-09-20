@@ -50,6 +50,48 @@ def create_figure(urls=[], title="", labels=[], xlabel="x", ylabel="y"):
     ax.set_ylabel(ylabel)
     ax.legend(loc="best")
     return figure
+def create_two_axes_figure(urls=[], title="", labels=[], xlabel="x", ylabel=["y0", "y1"]):
+    figure = Figure(figsize=(15, 2) )
+    ax0 = figure.add_subplot(1, 1, 1)
+    r0 = requests.get(urls[0])
+    data = r0.json()
+    x = []
+    y0 = []
+    for d in data:
+        x.append(datetime.fromisoformat(d[1]) )
+        y0.append(d[0])
+    ax0.plot(x, y0, label=labels[0])
+    locator = AutoDateLocator()
+    ax0.set_title(title)
+    ax0.xaxis.set_major_locator(locator)
+    ax0.xaxis.set_major_formatter(DateFormatter("%H:%M") )
+    ax0.set_xlabel(xlabel)
+    ax0.set_ylabel(ylabel[0])
+
+    ax1 = ax0.twinx()
+    color = 'tab:orange'
+    r1 = requests.get(urls[1])
+    data = r1.json()
+    x = []
+    y1 = []
+    for d in data:
+        x.append(datetime.fromisoformat(d[1]) )
+        y1.append(d[0])
+    ax1.plot(x, y1, label=labels[1], color=color)
+    ax1.set_title(title)
+    ax1.xaxis.set_major_locator(locator)
+    ax1.xaxis.set_major_formatter(DateFormatter("%H:%M") )
+    ax1.set_xlabel(xlabel)
+    ax1.set_ylabel(ylabel[1], color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
+    handles,labels = [],[]
+
+    for ax in figure.axes:
+        for h,l in zip(*ax.get_legend_handles_labels()):
+            handles.append(h)
+            labels.append(l)
+    ax.legend(handles, labels)
+    return figure
 def create_detector():
     contents = ""
     with open(UPLOAD_FOLDER + 'current.xml', 'r') as f:
@@ -207,7 +249,8 @@ def rate_png():
     return Response(output.getvalue(), mimetype='image/png')
 @app.route('/voltage.png')
 def voltage_png():
-    fig = create_figure(["http://localhost/api/voltage/4", "http://localhost/api/voltage/5"], "SiPM", ["C11204-02", "MOTech"], "time", "V[V]")
+    #fig = create_figure(["http://localhost/api/voltage/4", "http://localhost/api/voltage/5"], "SiPM", ["C11204-02", "MOTech"], "time", "V[V]")
+    fig = create_two_axes_figure(["http://localhost/api/voltage/4", "http://localhost/api/voltage/5"], "SiPM", ["C11204-02", "MOTech"], "time", ["V[V]", "V[V]"])
     output = io.BytesIO()
     FigureCanvas(fig).print_png(output)
     return Response(output.getvalue(), mimetype='image/png')

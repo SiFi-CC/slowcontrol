@@ -1914,8 +1914,8 @@ int main(int argc, char *argv[])
     if (WDcfg.StartupCalibration)
         calibrate(handle, &WDrun, BoardInfo);
 
-    if(WDcfg->AcquisitionTime < 60) {
-	    printf("Warning: acquisition time less than 1 minute. Check %s file if this is not what you expected.", ConfigFileName);
+    if(WDcfg.AcquisitionTime < 60) {
+	    printf("Warning: acquisition time less than 1 minute.\nCheck %s file if this is not what you expected.\n", ConfigFileName);
     }
     MYSQL *conn = mysql_init(NULL);
     MYSQL_RES *result;

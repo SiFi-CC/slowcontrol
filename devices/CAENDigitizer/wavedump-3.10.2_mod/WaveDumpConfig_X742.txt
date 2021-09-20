@@ -39,7 +39,7 @@ POST_TRIGGER  50
 #PULSE_POLARITY: input signal polarity.
 #options: POSITIVE, NEGATIVE
 #
-PULSE_POLARITY  POSITIVE
+PULSE_POLARITY  NEGATIVE
 
 # EXTERNAL_TRIGGER: external trigger input settings. When enabled, the ext. trg. can be either 
 # propagated (ACQUISITION_AND_TRGOUT) or not (ACQUISITION_ONLY) through the TRGOUT
@@ -49,7 +49,7 @@ EXTERNAL_TRIGGER   DISABLED
 # FAST_TRIGGER: fast trigger input settings. ONLY FOR 742 MODELS. When enabled, the fast trigger is used
 # for the data acquisition 
 # options: DISABLED, ACQUISITION_ONLY
-FAST_TRIGGER   ACQUISITION_ONLY		
+FAST_TRIGGER   ACQUISITION_ONLY
 
 # FAST_TRIGGER_DIGITIZING: ONLY FOR 742 MODELS. If enabled the fast trigger signal is digitized and it is
 # present in data readout as channel n.8 for each group.
@@ -85,12 +85,33 @@ CORRECTION_LEVEL AUTO
 #   1 = 2.5 GHz
 #   2 = 1 GHz
 #   3 = 750 MHz
-DRS4_FREQUENCY 0
+DRS4_FREQUENCY 2
 
 # OUTPUT_FILE_FORMAT: output file can be either ASCII (column of decimal numbers) or binary 
 # (2 bytes per sample)
 # options: BINARY, ASCII
-OUTPUT_FILE_FORMAT  ASCII
+OUTPUT_FILE_FORMAT  BINARY
+
+# Mysql
+
+USE_MYSQL YES
+
+MYSQL_SERVER localhost
+
+MYSQL_USER lab
+
+MYSQL_PASSWORD protontherapy
+
+MYSQL_DATABASE gccb
+
+# Wavedump outputs to this folder, no defaults at the moment
+OUTPUT_PATH /opt/data/202109
+
+# Wavedump will stop after this time. No option for infinite running yet
+ACQUISITION_TIME 10 #seconds
+
+# After this amount of seconds, the program will update the user with frequency and data size written (or possibly written)
+READOUT_PERIOD 1000 #ms
 
 # OUTPUT_FILE_HEADER: if enabled, the header is included in the output file data
 # options: YES, NO
@@ -116,6 +137,11 @@ FPIO_LEVEL  NIM
 # WRITE_REGISTER 1080 0000 0100
 # Example: Set register 1080 to the value of 0x45:
 # WRITE_REGISTER 1080 45 FFFFFFFF
+
+#WRITE_REGISTER 8000 2000 2000
+#WRITE_REGISTER 1080 2AB9 FFFF
+#WRITE_REGISTER 1080 3AC4 FFFF
+#WRITE_REGISTER 10A8 4 F
 
 # ----------------------------------------------------------------
 # Individual Settings 
@@ -152,10 +178,19 @@ DC_OFFSET              0
 
 [0]
 ENABLE_INPUT           YES
-DC_OFFSET              10
-GRP_CH_DC_OFFSET       3,0,0,0,0,0,0,0 
+DC_OFFSET              -10
+#GRP_CH_DC_OFFSET       3,0,0,0,0,0,0,0 
+GRP_CH_DC_OFFSET        -10,-10,-10,-10,-10,-10,-10,-10 
+
+READOUT_CHANNEL        1,1,1,0,0,0,0,0
 
 [1]
+ENABLE_INPUT           YES
+DC_OFFSET              -10
+#GRP_CH_DC_OFFSET       3,0,0,0,0,0,0,0 
+GRP_CH_DC_OFFSET        -10,-10,-10,-10,-10,-10,-10,-10 
+
+READOUT_CHANNEL        0,0,1,0,0,0,0,0
 
 
 [2]
