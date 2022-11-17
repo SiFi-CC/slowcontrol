@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Lab monitoring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    </head>
+    <body>
+        <div class="container">
+            <ul class="nav">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Slow control</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Data</a>
+                </li>
+            </ul>
+            <form method="post">
+                <button type="submit" class="btn btn-primary" name="action" value="start_devices" formaction="/">Start devices</button>
+                <button type="submit" class="btn btn-primary" name="action" value="stop_devices" formaction="/">Stop devices</button>
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Acquisition time</label>
+                    <input type="number" class="form-control" name="acquisitionTime" value="0" min="0" placeholder="e.g. 60.0">
+                </div>
+                <button type="submit" class="btn btn-primary" name="action" value="start_daq" formaction="/">Start DAQ</button>
+            </form>
+            <div class="ratio ratio-16x9">
+                <iframe src="http://172.16.32.214:8888/?nobrowser&item=Canvases/canSlowControl&monitoring=3000" />
+                <iframe src="http://172.16.32.214:8888/?nobrowser&item=Files/monitoring.root/hits/hHitsL&monitoring=3000" />
+                <iframe src="http://172.16.32.214:8888/?nobrowser&item=Files/monitoring.root/hits/hHitsR&monitoring=3000" />
+            </div>
+        </div>
+    </body>
+</html>
