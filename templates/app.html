@@ -5,16 +5,41 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+    <!-- JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
     <script>
+        const handler = function(data) {
+            $(".alert > span").text(data['message']);
+            $("#alertbox").removeClass(function (index, className) {
+                return (className.match (/(^|\s)alert-\S+/g) || []).join(' ');
+            }).addClass('alert-dismissible').addClass(data['status']).show();
+        }
         $(document).ready(function() {
-            setInterval(function() {
-                $.getJSON("/remaining", function(data) {
-                    $("#acquisitionProgress").css('width', data + "%").data('width', data).text(data + "%");
-                });
-            }, 5000);
             $("#start_daq").click(function() {
                 $.post("/start_daq", $("#acquisitionForm").serialize(), function(data) {
-                    console.log($("#acquisitionForm").serialize() );
+                    myInterval = setInterval(function() {
+                            $.getJSON("/remaining", function(data) {
+                                    $("#acquisitionProgress").css('width', data + "%").data('width', data).text(data + "%");
+                                    if(parseInt(data) == 100) {
+                                        clearInterval(myInterval);
+                                        $(".alert > span").text("DAQ stopped.");
+                                        $("#alertbox").removeClass(function (index, className) {
+                                            return (className.match (/(^|\s)alert-\S+/g) || []).join(' ');
+                                        }).addClass('alert-dismissible').addClass(data['status']).show();
+                                    }
+                            });
+                    }, 5000); //refresh progress bar every five seconds
+                    handler(data);
+                });
+            });
+            $("#start_devices").click(function() {
+                $.post("/start_devices", $("#acquisitionForm").serialize(), function(data) {
+                    handler(data);
+                });
+            });
+            $("#stop_devices").click(function() {
+                $.post("/stop_devices", {}, function(data) {
+                    handler(data);
                 });
             });
         });
@@ -22,41 +47,45 @@
     </head>
     <body>
         <div class="container">
+        <div id="alertbox" class="collapse alert alert-dismissible" role="alert">
+            <span></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
             <ul class="nav">
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="#">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Slow control</a>
+                    <a class="nav-link" href="#">Data</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Data</a>
+                    <a class="nav-link" href="#">Settings</a>
                 </li>
             </ul>
             <form id="acquisitionForm" method="post" class="row">
-                <div class="row">
+                <div class="row mt-3">
+                    <div class="form-floating col-md">
+                        <input id="snapshotInterval" type="number" class="form-control" name="snapshotInterval" value="0" min="0" placeholder="e.g. 5">
+                        <label for="snapshot" class="form-label">Snapshot Interval</label>
+                    </div>
+                    <div class="form-floating col-md">
+                        <select id="snapshotType" name="snapshotType" class="form-select" aria-label="type">
+                            <option selected="selected" value="seconds">seconds</option>
+                            <option value="events">events</option>
+                        </select>
+                        <label for="snapshotType">Snapshot type</label>
+                    </div>
+                </div>
+                <div class="row mt-3">
                     <div class="col">
-                        <button type="submit" class="btn btn-success rt-3" name="action" value="start_devices" formaction="/">Start devices</button>
-                        <button type="submit" class="btn btn-danger" name="action" value="stop_devices" formaction="/">Stop devices</button>
+                        <button id="start_devices" type="button" class="btn btn-success rt-3">Start devices</button>
+                        <button id="stop_devices" type="button"  class="btn btn-danger">Stop devices</button>
                     </div>
                 </div>
                 <div class="row mt-3">
                     <div class="form-floating col">
                         <input id="acquisitionTime" type="number" class="form-control" name="acquisitionTime" value="{{ session['acquisitionTime'] }}" min="0" placeholder="e.g. 60">
                         <label for="acquisitionTime" class="form-label">Acquisition time [seconds]</label>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="form-floating col-md">
-                        <input id="snapshot" type="number" class="form-control" name="snapshotInterval" value="0" min="0" placeholder="e.g. 5">
-                        <label for="snapshot" class="form-label">Snapshot Interval</label>
-                    </div>
-                    <div class="form-floating col-md">
-                        <select id="frequency" name="snapshotFrequency" class="form-select" aria-label="frequency">
-                            <option value="seconds">seconds</option>
-                            <option value="events">events</option>
-                        </select>
-                        <label for="frequency">Snapshot type</label>
                     </div>
                 </div>
                 <div class="row mt-3">
@@ -71,7 +100,10 @@
                 </div>
             </form>
             <div class="row mt-5 ratio ratio-16x9">
-                <iframe src="http://172.16.32.214:8888/?nobrowser&item=Canvases/canSlowControl&monitoring=3000" />
+                <iframe id="slowcontrol" src="http://172.16.32.214:8888/?nobrowser&item=Canvases/canSlowControl&monitoring=3000"></iframe>
+            </div>
+            <div class="row mt-5 ratio ratio-16x9">
+                <iframe id="hits" src="http://172.16.32.214:8888/?nobrowser&item=Canvases/canHits&monitoring=3000"></iframe>
             </div>
         </div>
     </body>
