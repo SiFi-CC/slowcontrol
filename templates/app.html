@@ -38,9 +38,12 @@
                 });
             });
             $("#stop_devices").click(function() {
-                $.post("/stop_devices", {}, function(data) {
+                $.post("/stop_devices", $("#acquisitionForm").serialize(), function(data) {
                     handler(data);
                 });
+            });
+            $("#reset_plots").click(function() {
+                
             });
         });
     </script>
@@ -95,6 +98,7 @@
                 </div>
                 <div class="row mt-5">
                     <div class="col">
+                        <button id="reset_plots" type="button" class="btn btn-secondary">Reset Plots</button>
                         <button id="start_daq" type="button" class="btn btn-primary float-end">Start DAQ</button>
                     </div>
                 </div>

@@ -2,7 +2,7 @@ import psutil
 import time
 import zmq
 def monitor():
-    print("starting LocalMachine monitor")
+    print("Starting LocalMachine monitor")
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
     socket.bind("tcp://172.16.32.214:2003")

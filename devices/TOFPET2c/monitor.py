@@ -2,9 +2,8 @@ from petsys import daqd, fe_temperature, config
 import time
 import zmq
 import signal
-
 def monitor():
-    print("starting TOFPET2c temperature monitor")
+    print("Starting TOFPET2c temperature monitor")
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
     socket.bind("tcp://172.16.32.214:2002")
@@ -23,7 +22,7 @@ def monitor():
             socket.send_json(r)
             time.sleep(5) # 5 seconds
     except KeyboardInterrupt:
-        pass
-
+        del connection
+        print("Keyboard interrupt")
 if __name__ == '__main__':
     monitor()

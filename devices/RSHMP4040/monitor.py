@@ -19,6 +19,6 @@ def monitor():
             socket.send_json(data)
             time.sleep(5) #5 seconds
     except KeyboardInterrupt:
-        print("keyboard interrupt")
+        print("Keyboard interrupt")
 if __name__ == '__main__':
     monitor()
