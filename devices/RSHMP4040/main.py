@@ -14,6 +14,7 @@ def on():
     instr.write_str('VOLT 12')
     instr.write_str('CURR 1.5')
     instr.write_str('OUTP 1')
+    instr.query_opc()
     ch3 = instr.query_str('OUTP?')
     
     time.sleep(5)
@@ -22,6 +23,7 @@ def on():
     instr.write_str('OUTP:SEL 1')
     instr.write_str('VOLT 12')
     instr.write_str('OUTP 1')
+    instr.query_opc()
     ch4 = instr.query_str('OUTP?')
     
     print(f"channel3 state: {ch3}, channel4 state: {ch4}")
@@ -30,8 +32,10 @@ def off():
     instr = RsInstrument("TCPIP::172.16.32.113::5025::SOCKET", id_query=True, reset=True)
     instr.write_str('OUTP:GEN 0')
     instr.write_str('INST OUT3')
+    instr.query_opc()
     ch3 = instr.query_str('OUTP?')
     instr.write_str('INST OUT4')
+    instr.query_opc()
     ch4 = instr.query_str('OUTP?')
     print(f"channel3 state: {ch3}, channel4 state: {ch4}")
     instr.close()

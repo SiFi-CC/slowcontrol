@@ -22,7 +22,7 @@ def monitor():
             socket.send_json(r)
             time.sleep(5) # 5 seconds
     except KeyboardInterrupt:
-        del connection
-        print("Keyboard interrupt")
+        connection.exit()
+        socket.close()
 if __name__ == '__main__':
     monitor()

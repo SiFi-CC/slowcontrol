@@ -49,8 +49,8 @@ def start_devices():
         subprocess.call(["killall", "daqd"], stdout=subprocess.PIPE)
         print("Cleaning up possible remnants from improper program termination. Usually should report warnings or errors.")
         p = subprocess.Popen(["/home/lab/Desktop/DAQ/build/./daqd", "--daq-type=PFP_KX7"], stdout=subprocess.PIPE)
-        print("Initialising dadq from TOFPET2.")
-        time.sleep(3)
+        print("Initialising daqd from TOFPET2.")
+        time.sleep(5)
         if p:
             print("Started daqd.")
             subprocess.Popen(["python3", "-u", "/home/lab/Desktop/slowcontrol/devices/TOFPET2c/monitor.py"], stdout=subprocess.PIPE)
