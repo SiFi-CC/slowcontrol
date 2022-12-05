@@ -5,6 +5,8 @@ import os
 import time
 import secrets
 import zmq
+import requests
+from dotenv import load_dotenv
 from devices.RSHMP4040.monitor import monitor as rshmp4040
 from devices.LocalMachine.monitor import monitor as localmachine
 from flask import Flask, request, redirect, render_template, session, jsonify
@@ -88,6 +90,9 @@ def stop_devices():
         return {"status": "alert-success", "message": "All devices stopped."}, 200
 @app.route("/", methods=['GET', 'POST'])
 def home():
-    return render_template("app.html")
+    load_dotenv()
+    endpoint = "https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/measurements?q=last_inserted_id"
+    runs = requests.get(url = endpoint, auth=requests.auth.HTTPBasicAuth(os.getenv('USERNAME'), os.getenv('PASSWORD') ) )
+    return render_template("app.html", data={'run': runs.json()[0]} )
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
