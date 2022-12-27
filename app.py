@@ -36,7 +36,7 @@ def start_daq():
         session['startTime'] = time.time()
         session['acquisitionTime'] = acquisitionTime
         os.chdir("/home/lab/Desktop/DAQ/build/")
-        proc = subprocess.Popen(["python3", "-u", "./acquire_sipm_data", "--config", "/home/lab/Desktop/DAQ/sandbox/config.ini", "-o", "run99999", "--mode", "qdc", "--time", acquisitionTime], stdout=subprocess.PIPE)
+        proc = subprocess.Popen(["python3", "-u", "./acquire_sipm_data", "--config", "/home/lab/Desktop/DAQ/sandbox/config.ini", "-o", "run99999", "--mode", "qdc", "--time", "--enable-hw-trigger", acquisitionTime], stdout=subprocess.PIPE)
     return {"status": "alert-success", "message": "DAQ started."}, 200
     # TODO: do we want to check if the DAQ acquire process is really gone?
 @app.route("/start_devices", methods=['GET', 'POST'])
@@ -105,7 +105,7 @@ def home():
     load_dotenv()
     endpoint = "https://bragg.if.uj.edu.pl/SiFiCCData/Prototype/api/measurements?q=last_inserted_id"
     runs = requests.get(url = endpoint, auth=requests.auth.HTTPBasicAuth(os.getenv('DB_USER'), os.getenv('DB_PASS') ) )
-#    ps = rshmp4040_state.state()
+    ps = rshmp4040_state.state()
     ps = 0
     tp = 0
     return render_template("app.html", data={'run': runs.json()[0]} )
