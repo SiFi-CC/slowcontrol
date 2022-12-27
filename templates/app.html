@@ -4,6 +4,7 @@
         <title>Lab monitoring</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
     <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
     <!-- JavaScript Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
@@ -13,6 +14,18 @@
             $("#alertbox").removeClass(function (index, className) {
                 return (className.match (/(^|\s)alert-\S+/g) || []).join(' ');
             }).addClass('alert-dismissible').addClass(data['status']).show();
+            data['rshmp4040'].forEach(function(ch) {
+                var className = ch.state == "1" ? "text-success" : "";
+                $("#ps_ch_" + ch.number).removeClass(function (index, className) {
+                    return (className.match (/(^|\s)text-\S+/g) || []).join(' ');
+                }).addClass(className);
+            });
+            data['tofpet'].forEach(function(item) {
+                var className = item.state == "1" ? "text-success" : "";
+                $("#tofpet_" + item.name).removeClass(function (index, className) {
+                    return (className.match (/(^|\s)text-\S+/g) || []).join(' ');
+                }).addClass(className);
+            });
         }
         $(document).ready(function() {
             $("#start_daq").click(function() {
@@ -33,13 +46,17 @@
                 });
             });
             $("#start_devices").click(function() {
+                $(this).addClass("disabled");
                 $.post("/start_devices", $("#acquisitionForm").serialize(), function(data) {
                     handler(data);
+                    $(this).removeClass("disabled");
                 });
             });
             $("#stop_devices").click(function() {
+                $(this).addClass("disabled");
                 $.post("/stop_devices", $("#acquisitionForm").serialize(), function(data) {
                     handler(data);
+                    $(this).removeClass("disabled");
                 });
             });
             $("#reset_plots").click(function() {
@@ -85,6 +102,19 @@
                         <button id="start_devices" type="button" class="btn btn-success rt-3">Start devices</button>
                         <button id="stop_devices" type="button"  class="btn btn-danger">Stop devices</button>
                     </div>
+                <div>
+                    <p>
+                        Power supply, RSHMP4040 channel states:
+                        <i id="ps_ch_1" class="bi bi-1-circle-fill"></i>
+                        <i id="ps_ch_2" class="bi bi-2-circle-fill"></i>
+                        <i id="ps_ch_3" class="bi bi-3-circle-fill"></i>
+                        <i id="ps_ch_4" class="bi bi-4-circle-fill"></i>
+                    </p>
+                    <p>
+                        TOFPET FEB/D state:
+                        <i id="tofpet_FEBD" class="bi bi-lightbulb-fill"></i>
+                    </p>
+                </div>
                 </div>
                 <div class="row mt-3">
                     <div class="form-floating col">

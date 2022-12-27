@@ -7,7 +7,8 @@ def monitor():
     socket.bind("tcp://172.16.32.214:2001")
     try:
         while True:
-            instr = RsInstrument("TCPIP::172.16.32.113::5025::SOCKET", id_query=True, reset=False)
+            # instr = RsInstrument("TCPIP::172.16.32.113::5025::SOCKET", id_query=True, reset=False)
+            instr = RsInstrument("USB0::2733::279::121224::0::INSTR", id_query=True, reset=False)
             instr.write_str('INST OUT3')
             ch3_c = instr.query_str('MEAS:CURR?')
             ch3_v = instr.query_str('MEAS:VOLT?')

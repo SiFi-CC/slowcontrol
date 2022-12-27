@@ -23,6 +23,7 @@ def monitor():
     socket = context.socket(zmq.PUB)
     socket.bind("tcp://172.16.32.214:2003")
     listOfProcessIds = findProcessIdByName('daqd')
+    print(listOfProcessIds)
     try:
         while True:
             r = {}
